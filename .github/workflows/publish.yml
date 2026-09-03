@@ -1,6 +1,8 @@
 name: Publish to Hugging Face
 
 on:
+  schedule:
+    - cron: "0 0 * * 4"
   workflow_dispatch:
 
 jobs:
@@ -19,14 +21,7 @@ jobs:
         with:
           enable-cache: true
 
-      - run: uv run main.py
-
-      - name: Install the hf CLI
-        run: |
-          curl -LsSf https://hf.co/cli/install.sh | bash
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-
       - name: Upload checkpoint
         env:
           HF_OIDC_RESOURCE: datasets/jiangzhexin/bangumi-archive
-        run: hf upload jiangzhexin/bangumi-archive ./data . --repo-type dataset --commit-message "Publish from ${GITHUB_SHA::7}"
+        run: uv run main.py

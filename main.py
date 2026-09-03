@@ -5,13 +5,13 @@ import zipfile
 from pathlib import Path
 
 import polars as pl
-
-dir = Path("data")
+from huggingface_hub import HfApi
 
 
 def main():
     archive_path = download()
-    transformer(archive_path=archive_path, output_dir=dir)
+    output_dir = transformer(archive_path=archive_path)
+    upload(archive_path, output_dir)
 
 
 def download() -> Path:
@@ -34,7 +34,11 @@ def download() -> Path:
     return path
 
 
-def transformer(archive_path: Path, output_dir: Path, compression_level: int = 9):
+def transformer(
+    archive_path: Path,
+    output_dir: Path = Path("data"),
+    compression_level: int = 9,
+) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     repace_str = pl.col(pl.String).replace("", None)
@@ -221,6 +225,18 @@ def transformer(archive_path: Path, output_dir: Path, compression_level: int = 9
             output_dir / "subject.parquet",
             compression_level=compression_level,
         )
+    return output_dir
+
+
+def upload(archive_path: Path, output_dir: Path):
+    api = HfApi()
+
+    api.upload_folder(
+        folder_path=output_dir,
+        repo_id="jiangzhexin/bangumi-archive",
+        repo_type="dataset",
+        commit_message=f"Publish from {archive_path.stem}",
+    )
 
 
 if __name__ == "__main__":
